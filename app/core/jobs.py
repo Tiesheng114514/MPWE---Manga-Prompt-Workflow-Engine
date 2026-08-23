@@ -17,6 +17,7 @@ import websocket
 
 from app.core import billing, gpu_metrics
 from app.core.db import PROJECT_ROOT, init_mpwe_db
+from app.core.runlog import append_run
 from app.comfyui.client import ComfyUIClient, ComfyUIError
 
 _JOB_TIMEOUT = 900  # 重活（大图超分+脸部修复）可能超过 5 分钟，放宽到 15 分钟
@@ -435,6 +436,23 @@ def _finalize_job(job_manager: JobManager, client: ComfyUIClient, job: dict) -> 
     price = (job_manager.config.get("billing") or {}).get("image", {}).get("price_per_image", 0.3)
     billing.charge_images(billing.billing_db(), uid, len(local_images), float(price), ref_id=job_id)
 
+    model = (params.get("checkpoint") or params.get("unet_name") or "").strip()
+    append_run(
+        {
+            "kind": "job_done",
+            "user_id": uid,
+            "job_id": job_id,
+            "workflow": job.get("workflow"),
+            "model": model,
+            "status": "done",
+            "image_count": len(local_images),
+            "gpu_seconds": round(gpu_seconds, 2),
+            "gpu_flops": flops,
+            "tflops_hour": round(flops / 1e12 / 3600, 6),
+            "created_at": job.get("created_at"),
+        }
+    )
+
 
 def _run_polling(job_manager: JobManager, client: ComfyUIClient, job: dict) -> None:
     """后台线程：通过 ComfyUI websocket 收取进度事件，轮询 history 直到完成。"""
@@ -508,6 +526,17 @@ def _run_polling(job_manager: JobManager, client: ComfyUIClient, job: dict) -> N
         raise ComfyUIError(f"等待 ComfyUI 任务超时（{_JOB_TIMEOUT}s）: {prompt_id}")
     except ComfyUIError as exc:
         job_manager.update(job_id, status="error", error=str(exc))
+        append_run(
+            {
+                "kind": "job_done",
+                "user_id": job.get("user_id"),
+                "job_id": job_id,
+                "workflow": job.get("workflow"),
+                "status": "error",
+                "error": str(exc),
+                "created_at": job.get("created_at"),
+            }
+        )
     finally:
         if ws is not None:
             try:

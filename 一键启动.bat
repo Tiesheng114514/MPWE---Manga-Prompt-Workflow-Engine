@@ -1,6 +1,7 @@
 @echo off
 setlocal EnableDelayedExpansion
 cd /d "%~dp0"
+set "PYTHONIOENCODING=utf-8"
 
 echo ============================================================
 echo   MPWE 一键启动
@@ -41,7 +42,7 @@ REM ---------- 启动管理员后台 ----------
 powershell -NoProfile -Command "if (Get-NetTCPConnection -State Listen -LocalPort 8643 -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }" >nul 2>&1
 if errorlevel 1 (
     echo   启动管理员后台（8643）...
-    start "MPWE-Admin" /min cmd /c "call scripts\启动管理员后台WebUI.bat"
+    start "MPWE-Admin" cmd /c "call scripts\启动管理员后台WebUI.bat"
 ) else (
     echo   管理员后台已在运行（8643）
 )
@@ -51,20 +52,11 @@ echo   访问地址:
 echo     WebUI   : http://localhost:8642
 echo     管理后台: http://localhost:8643
 echo.
-echo   本窗口可输入指令:
-echo     q = 退出全部服务
-echo     l = 查看 WebUI 最新日志
+echo   下面实时显示 WebUI + ComfyUI 合并日志（写盘: data\logs\webui.log 与 comfyui_*.log）
+echo   按 q 退出全部服务。
 echo.
-
-:menu
-set "INPUT="
-set /p "INPUT=请输入指令 (q/l): "
-if /i "!INPUT!"=="q" goto quit_all
-if /i "!INPUT!"=="l" (
-    powershell -NoProfile -Command "Get-Content -Tail 40 'data\logs\webui.log' -ErrorAction SilentlyContinue"
-    echo.
-)
-goto menu
+powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\logs_tail.ps1"
+goto quit_all
 
 :quit_all
 echo.

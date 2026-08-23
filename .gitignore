@@ -12,6 +12,12 @@ config.local.yaml
 data/
 !data/vram_estimates.json
 
+# 运行日志与临时生成物（依赖、配置文件、后台数据等都不入库）
+*.log
+*.tmp
+*.bak
+app/logs/
+
 # 系统
 .DS_Store
 Thumbs.db

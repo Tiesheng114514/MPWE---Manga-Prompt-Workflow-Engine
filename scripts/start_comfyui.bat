@@ -6,14 +6,27 @@ cd /d "%~dp0.."
 if exist "data\local_paths.bat" call "data\local_paths.bat"
 
 if not defined COMFY_ROOT set "COMFY_ROOT=E:\AI\Confy UI\ComfyUI\ComfyUI"
-if not defined COMFY_PY set "COMFY_PY=%COMFY_ROOT%\standalone-env\python.exe"
+if not defined COMFY_PY (
+    if exist "%COMFY_ROOT%\standalone-env\python.exe" (
+        set "COMFY_PY=%COMFY_ROOT%\standalone-env\python.exe"
+    ) else if exist "%COMFY_ROOT%\..\standalone-env\python.exe" (
+        set "COMFY_PY=%COMFY_ROOT%\..\standalone-env\python.exe"
+    ) else (
+        set "COMFY_PY=%COMFY_ROOT%\standalone-env\python.exe"
+    )
+)
 set "BASE_PY=%COMFY_PY%"
 
 if not defined SITE_PACKAGES (
+    for %%I in ("%COMFY_PY%") do set "PY_DIR=%%~dpI"
     if exist "%COMFY_ROOT%\.venv\Lib\site-packages" (
         set "SITE_PACKAGES=%COMFY_ROOT%\.venv\Lib\site-packages"
+    ) else if exist "!PY_DIR!Lib\site-packages" (
+        set "SITE_PACKAGES=!PY_DIR!Lib\site-packages"
+    ) else if exist "!PY_DIR!..\Lib\site-packages" (
+        set "SITE_PACKAGES=!PY_DIR!..\Lib\site-packages"
     ) else (
-        set "SITE_PACKAGES=%CD%\.venv\Lib\site-packages"
+        set "SITE_PACKAGES=!PY_DIR!Lib\site-packages"
     )
 )
 
@@ -30,14 +43,15 @@ set /a WORKERS=%WORKERS% 2>nul
 if %WORKERS% LSS 1 set "WORKERS=1"
 if %WORKERS% GTR 4 set "WORKERS=4"
 
-echo 启动 %WORKERS% 个 ComfyUI 实例（127.0.0.1:8188 起）...
+if not exist "%~dp0..\data\logs" mkdir "%~dp0..\data\logs"
+echo 启动 %WORKERS% 个 ComfyUI 实例（127.0.0.1:8188 起，日志: data\logs\comfyui_*.log）...
 cd /d "%COMFY_ROOT%"
 set PYTHONUNBUFFERED=1
 set "PYTHONPATH=%SITE_PACKAGES%"
 
 for /l %%i in (1,1,%WORKERS%) do (
     set /a "P=8187+%%i"
-    start "ComfyUI-%%i" cmd /k ""%BASE_PY%" main.py --listen 127.0.0.1 --port !P! --extra-model-paths-config "%~dp0..\comfyui_extra_model_paths.yaml" --database-url "sqlite:///%~dp0..\data\comfyui_!P!.db""
+    start "ComfyUI-%%i" cmd /k ""%BASE_PY%" main.py --listen 127.0.0.1 --port !P! --extra-model-paths-config "%~dp0..\comfyui_extra_model_paths.yaml" --database-url "sqlite:///%~dp0..\data\comfyui_!P!.db" >> "%~dp0..\data\logs\comfyui_!P!.log" 2>&1"
 )
 
 echo.

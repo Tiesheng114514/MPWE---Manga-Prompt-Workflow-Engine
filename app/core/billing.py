@@ -14,6 +14,7 @@ import time
 from datetime import datetime
 
 from app.core.db import Database, init_mpwe_db, mpwe_db_path, row_to_dict, rows_to_dicts
+from app.core.runlog import append_run
 
 _init_lock = threading.Lock()
 _db: Database | None = None
@@ -94,7 +95,7 @@ def recharge(db: Database, uid: str, wallet: str, amount_yuan: float, note: str 
     mli = round(float(amount_yuan) * 1000)
     if mli == 0:
         raise ValueError("金额不能为 0")
-    return _adjust(
+    result = _adjust(
         db,
         uid,
         f"{wallet}_recharge",
@@ -103,6 +104,16 @@ def recharge(db: Database, uid: str, wallet: str, amount_yuan: float, note: str 
         "",
         {"note": note or "", "operator": "admin"},
     )
+    append_run(
+        {
+            "kind": "recharge",
+            "user_id": uid,
+            "wallet": wallet,
+            "amount_mli": mli,
+            "note": note or "",
+        }
+    )
+    return result
 
 
 def is_free_claimed(db: Database, uid: str) -> bool:
@@ -165,6 +176,19 @@ def charge_api(db: Database, uid: str, usage: dict, price_info: dict, ref_id: st
             "amount_yuan": round(cost_mli / 1000.0, 6),
         },
     )
+    append_run(
+        {
+            "kind": "api",
+            "user_id": uid,
+            "ref_id": ref_id,
+            "model": price_info.get("model", ""),
+            "peak": bool(price_info.get("peak")),
+            "prompt_tokens": int(usage.get("prompt_tokens") or 0),
+            "completion_tokens": int(usage.get("completion_tokens") or 0),
+            "total_tokens": int(usage.get("total_tokens") or 0),
+            "cost_mli": cost_mli,
+        }
+    )
     return cost_mli
 
 
@@ -187,6 +211,16 @@ def charge_images(db: Database, uid: str, count: int, price_per_image_yuan: floa
                 "amount_yuan": round(cost_mli / 1000.0, 4),
             },
         )
+        append_run(
+            {
+                "kind": "image",
+                "user_id": uid,
+                "ref_id": ref_id,
+                "image_count": int(count),
+                "price_per_image_yuan": float(price_per_image_yuan),
+                "cost_mli": cost_mli,
+            }
+        )
     except ValueError:
         # 极端情况：余额不够本次张数，扣到 0
         wallet = get_wallets(db, uid)
@@ -205,6 +239,17 @@ def charge_images(db: Database, uid: str, count: int, price_per_image_yuan: floa
                     "amount_yuan": round(bal / 1000.0, 4),
                     "note": "余额不足，按剩余余额扣除",
                 },
+            )
+            append_run(
+                {
+                    "kind": "image",
+                    "user_id": uid,
+                    "ref_id": ref_id,
+                    "image_count": int(count),
+                    "price_per_image_yuan": float(price_per_image_yuan),
+                    "cost_mli": bal,
+                    "note": "余额不足，按剩余余额扣除",
+                }
             )
         return bal
     return cost_mli
