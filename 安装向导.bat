@@ -21,7 +21,8 @@ if errorlevel 1 (
         exit /b 1
     )
     echo   请手动安装 git（一路默认下一步即可）:
-    echo   https://git-scm.com/download/win
+    echo   官方下载: https://git-scm.com/download/win
+    echo   国内镜像: https://registry.npmmirror.com/-/binary/git-for-windows/
     echo   装完后重新运行本脚本。
     pause
     exit /b 1
@@ -40,8 +41,21 @@ if not defined PY_CMD (
 )
 if not defined PY_CMD (
     echo   未检测到 Python。
-    echo   请安装 Python 3.11 及以上（推荐 3.14）: https://www.python.org/downloads/
-    echo   安装时务必勾选 "Add python.exe to PATH"。
+    set /p "want_py=   是否自动下载安装 Python 3.14（国内华为云镜像，约 25MB）? (y/n): "
+    if /i "!want_py!"=="y" (
+        echo   正在下载 Python 3.14.6 ...
+        curl.exe -4 -L --retry 3 -o "%TEMP%\python-3.14.6-installer.exe" "https://mirrors.huaweicloud.com/python/3.14.6/python-3.14.6-amd64.exe"
+        if exist "%TEMP%\python-3.14.6-installer.exe" (
+            echo   下载完成，开始静默安装（请稍候）...
+            start /wait "%TEMP%\python-3.14.6-installer.exe" /quiet InstallAllUsers=0 PrependPath=1 Include_test=0
+            echo   安装结束，请重新运行本脚本。
+        ) else (
+            echo   [错误] 下载失败，请手动安装: https://www.python.org/downloads/windows/
+        )
+    ) else (
+        echo   请手动安装 Python 3.11 及以上（推荐 3.14）: https://www.python.org/downloads/windows/
+        echo   安装时务必勾选 "Add python.exe to PATH"。
+    )
     pause
     exit /b 1
 )
@@ -59,8 +73,12 @@ if not exist ".venv\Scripts\python.exe" (
         exit /b 1
     )
 )
-".venv\Scripts\python.exe" -m pip install --upgrade pip >nul 2>&1
-".venv\Scripts\python.exe" -m pip install -r requirements.txt
+".venv\Scripts\python.exe" -m pip install --upgrade pip -i https://pypi.tuna.tsinghua.edu.cn/simple >nul 2>&1
+".venv\Scripts\python.exe" -m pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+if errorlevel 1 (
+    echo   [提示] 清华镜像安装失败，改用官方源重试 ...
+    ".venv\Scripts\python.exe" -m pip install -r requirements.txt
+)
 if errorlevel 1 (
     echo   [错误] 依赖安装失败，请检查网络后重新运行。
     pause
@@ -91,6 +109,14 @@ if not exist "%COMFY_ROOT%\main.py" (
     if /i "!want_dl!"=="y" (
         if not exist "%USERPROFILE%\ComfyUI" mkdir "%USERPROFILE%\ComfyUI"
         git clone https://github.com/comfyanonymous/ComfyUI.git "%USERPROFILE%\ComfyUI\ComfyUI"
+        if errorlevel 1 (
+            echo   GitHub 直连失败，尝试国内镜像（Gitee）...
+            git clone https://gitee.com/mirrors/ComfyUI.git "%USERPROFILE%\ComfyUI\ComfyUI"
+        )
+        if errorlevel 1 (
+            echo   Gitee 也失败，尝试 GitCode 镜像 ...
+            git clone https://gitcode.com/gh_mirrors/co/ComfyUI.git "%USERPROFILE%\ComfyUI\ComfyUI"
+        )
         set "COMFY_ROOT=%USERPROFILE%\ComfyUI\ComfyUI"
     ) else (
         set "COMFY_ROOT="
@@ -112,7 +138,11 @@ if not defined COMFY_PY set "COMFY_PY=%CD%\.venv\Scripts\python.exe"
 REM 非 standalone 环境时补装 ComfyUI 依赖
 if not exist "%COMFY_ROOT%\standalone-env\python.exe" (
     echo   正在安装 ComfyUI 依赖（首次较慢）...
-    "%COMFY_PY%" -m pip install -r "%COMFY_ROOT%\requirements.txt"
+    "%COMFY_PY%" -m pip install -r "%COMFY_ROOT%\requirements.txt" -i https://pypi.tuna.tsinghua.edu.cn/simple
+    if errorlevel 1 (
+        echo   [提示] 清华镜像失败，改用官方源重试 ...
+        "%COMFY_PY%" -m pip install -r "%COMFY_ROOT%\requirements.txt"
+    )
     if errorlevel 1 (
         echo   [错误] ComfyUI 依赖安装失败。
         pause
@@ -219,6 +249,10 @@ if not exist "%COMFY_ROOT%\custom_nodes\ComfyUI-Impact-Pack" (
     if /i "!want_impact!"=="y" (
         if not exist "%COMFY_ROOT%\custom_nodes" mkdir "%COMFY_ROOT%\custom_nodes"
         git clone https://github.com/ltdrdata/ComfyUI-Impact-Pack.git "%COMFY_ROOT%\custom_nodes\ComfyUI-Impact-Pack"
+        if errorlevel 1 (
+            echo   GitHub 直连失败，尝试 GitCode 镜像 ...
+            git clone https://gitcode.com/gh_mirrors/co/ComfyUI-Impact-Pack.git "%COMFY_ROOT%\custom_nodes\ComfyUI-Impact-Pack"
+        )
         "%COMFY_PY%" -m pip install -r "%COMFY_ROOT%\custom_nodes\ComfyUI-Impact-Pack\requirements.txt"
     )
 )
