@@ -1,0 +1,71 @@
+name: Animagine XL 4.0 Opt Clear
+model_file: animagine-xl-4.0-opt_clear.safetensors
+category: checkpoints
+workflow: txt2img
+source: "https://huggingface.co/easygoing0114/animagine-xl-4.0-opt_clear（官方推荐：CFG 4-6，DPM++ 2M SDE，beta，15-25 步）"
+params:
+  steps: 22
+  cfg: 5.0
+  sampler: dpmpp_2m_sde
+  scheduler: beta
+  width: 1024
+  height: 1024
+prompt:
+  style: tags_and_natural_language
+  guide: 动漫风格，官方推荐质量标签，支持自然语言与标签混用。
+negative_default: lowres, bad anatomy, bad hands, worst quality, low quality, blurry, watermark, text
+
+# 画质增强预设（超分放大重绘 + 脸部修复）
+quality:
+  hires:
+    upscale_model: 2x_IllustrationJaNai_V3detail_SPAN_S_40k_fp16.safetensors
+    denoise: 0.45
+    steps: 20
+    cfg: 5.0
+  face_detailer:
+    detector: bbox/face_yolov8m.pt
+    threshold: 0.5
+    denoise: 0.35
+    steps: 16
+    cfg: 5.0
+    guide_size: 512
+    max_size: 1024
+
+# 官方推荐分辨率（Animagine XL 4.0 官方 README：Recommended Resolutions）
+resolution_presets:
+  - name: 方图 · 官方基准
+    width: 1024
+    height: 1024
+    note: 官方训练分辨率（1:1）
+  - name: 竖版 · 7:9
+    width: 896
+    height: 1152
+    note: 官方推荐
+  - name: 竖版 · 2:3
+    width: 832
+    height: 1216
+    note: 官方推荐
+  - name: 竖版 · 4:7
+    width: 768
+    height: 1344
+    note: 官方推荐
+  - name: 竖版 · 5:12
+    width: 640
+    height: 1536
+    note: 官方推荐（超长构图）
+  - name: 横版 · 9:7
+    width: 1152
+    height: 896
+    note: 官方推荐
+  - name: 横版 · 3:2
+    width: 1216
+    height: 832
+    note: 官方推荐
+  - name: 横版 · 7:4
+    width: 1344
+    height: 768
+    note: 官方推荐
+  - name: 横版 · 12:5
+    width: 1536
+    height: 640
+    note: 官方推荐（超宽构图）

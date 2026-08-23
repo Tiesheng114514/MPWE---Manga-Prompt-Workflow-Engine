@@ -1,0 +1,54 @@
+name: Anima Aesthetic v1.1
+model_file: anima-aesthetic-v1.1.safetensors
+category: diffusion_models
+workflow: anima_txt2img
+source: https://huggingface.co/circlestone-labs/Anima
+params:
+  steps: 30
+  cfg: 4.0
+  sampler: euler
+  scheduler: simple
+  model_shift: 0.0
+  width: 1024
+  height: 1024
+  clip_name: qwen_3_06b_base.safetensors
+  clip_type: stable_diffusion
+  vae_name: qwen_image_vae.safetensors
+  latent_node: EmptyLatentImage
+prompt:
+  style: tags_and_natural_language
+  positive_prefix: masterpiece, best quality, score_7, safe,
+  tag_order: "[quality/meta/year/safety] [1girl/1boy] [character] [series] [artist] [general tags]"
+  guide: 支持 Danbooru 标签与自然语言混用，按官方顺序排列更稳。
+negative_default: worst quality, low quality, jpeg artifacts, signature, sepia, fewer digits, extra digits, bad hands, bad anatomy, watermark, censored, score_1, score_2, score_3
+
+# 官方推荐分辨率（官方：512^2 ~ 1536^2 像素均可，预览图约 1MP 效果最佳）
+resolution_presets:
+  - name: 方图 · 通用
+    width: 1024
+    height: 1024
+    note: 官方预览档（约 1MP）
+  - name: 竖版 · 半身
+    width: 896
+    height: 1152
+    note: 官方预览档（约 1MP）
+  - name: 横版 · 半身
+    width: 1152
+    height: 896
+    note: 官方预览档（约 1MP）
+  - name: 竖版 · 全身
+    width: 832
+    height: 1216
+    note: 约 1MP，全身/角色图
+  - name: 横版 · 场景
+    width: 1216
+    height: 832
+    note: 约 1MP，场景横构图
+  - name: 竖版 · 高挑
+    width: 768
+    height: 1344
+    note: 长构图（约 1MP）
+  - name: 横版 · 超宽
+    width: 1344
+    height: 768
+    note: 超宽构图（约 1MP）

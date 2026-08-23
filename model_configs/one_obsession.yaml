@@ -1,0 +1,129 @@
+name: One Obsession V14
+model_file: one obsession_v14.safetensors
+category: checkpoints
+workflow: txt2img
+source: "https://civitai.com/models/1318945（V14 单文件版，HF: fastteag/oneobsession）"
+params:
+  steps: 33
+  cfg: 5.0
+  sampler: euler_ancestral
+  scheduler: normal
+  width: 832
+  height: 1216
+prompt:
+  style: danbooru_tags
+  guide: Illustrious/Noob 系模型：标签 + 质量词，建议加时间标签（如 year 2025）与画师/风格标签。
+negative_default: bad quality, worst quality, worst detail, sketch, censor, low quality, logo, text, watermark, signature
+
+# 画质增强预设（超分放大重绘 + 脸部修复，4060m 8G 显存下可用）
+quality:
+  hires:
+    upscale_model: 2x_IllustrationJaNai_V3detail_SPAN_S_40k_fp16.safetensors
+    denoise: 0.45
+    steps: 20
+    cfg: 5.0
+  face_detailer:
+    detector: bbox/face_yolov8m.pt
+    threshold: 0.5
+    denoise: 0.35
+    steps: 16
+    cfg: 5.0
+    guide_size: 512
+    max_size: 1024
+
+# LoRA 叠加配置（默认开启项已在 WebUI 自动勾选；权重可按需调）
+# 类型规则：quality 恒加载；style 按用户选择；hands/hair 修复类；character 与角色绑定；nsfw/other 按需求
+loras:
+  - name: Smooth Detailer Booster（整体画质增强）
+    file: Smooth_Booster_v5.safetensors
+    type: quality
+    weight: 0.5
+    cfg: 5
+    default: true
+    notes: 官方建议 CFG 3-5；少于 2 个 LoRA 0.7-1.2，多于 2 个 0.3-0.7
+  - name: markinson_solidline（线条风格）
+    file: markinson_solidline.safetensors
+    type: style
+    weight: 0.7
+    trigger: markinson_solidline
+    default: true
+    notes: 与 solidline 同作者；闪亮皮肤+粗线条
+  - name: Perfect Hands Illustrious（手部修复）
+    file: PerfectHandsIllustrious.safetensors
+    type: hands
+    weight: 0.7
+    default: true
+    notes: 修复六指/断指/畸形手掌，Illustrious 专用
+  - name: Detailed Anime Style ILv2（蓬松发丝）
+    file: Detailed_anime_style-ILv2.safetensors
+    type: hair
+    weight: 0.6
+    default: true
+    notes: 官方建议权重低于 0.75，发丝更蓬松有层次
+  - name: Hands XL v5.5（手部备选）
+    file: HandsXL_v55.safetensors
+    type: hands
+    weight: 0.5
+    default: false
+    notes: 通用 XL 手部 LoRA，与 Perfect Hands 二选一即可
+  - name: LECO BadHands / GoodHands（手部组合）
+    file: LECO_BadHands.safetensors
+    type: hands
+    weight: 1.0
+    default: false
+    notes: 社区用法 BadHands 正权重 + GoodHands 负权重（见下一条）
+  - name: LECO GoodHands（与 BadHands 配对）
+    file: LECO_GoodHands.safetensors
+    type: hands
+    weight: -1.0
+    default: false
+    notes: 与 LECO_BadHands 成对使用
+  - name: NSFW 过滤/增强滑杆
+    file: NSFWFilter_illusXL_Incrs_v1.safetensors
+    type: nsfw
+    weight: 0.5
+    default: false
+    notes: 正权重=更 NSFW，0.3-1.0 之间调
+  - name: NSFW 细节增强器（替代 Zoda）
+    file: Detailer_NoobAI_Incrs_v1.safetensors
+    type: nsfw
+    weight: 0.5
+    default: false
+    notes: 增强 NSFW 场景细节与纹理
+  - name: NSFW 姿势 LoRA
+    file: random-nsfw-poses-v9-illustriousxl-lora-nochekaiser.safetensors
+    type: nsfw
+    weight: 0.6
+    default: false
+    notes: 提供 NSFW 姿势库
+
+# 推荐分辨率（Civitai 页面推荐 832x1216；Illustrious/Noob 系通用档）
+resolution_presets:
+  - name: 竖版 · 角色
+    width: 832
+    height: 1216
+    note: 官方页面推荐
+  - name: 方图 · 通用
+    width: 1024
+    height: 1024
+    note: Illustrious 系基准
+  - name: 竖版 · 半身
+    width: 896
+    height: 1152
+    note: Illustrious 系常用
+  - name: 横版 · 半身
+    width: 1152
+    height: 896
+    note: Illustrious 系常用
+  - name: 竖版 · 全身
+    width: 768
+    height: 1344
+    note: 长构图
+  - name: 横版 · 超宽
+    width: 1536
+    height: 640
+    note: 超宽构图
+  - name: 竖版 · 高画质
+    width: 1024
+    height: 1536
+    note: 高画质档

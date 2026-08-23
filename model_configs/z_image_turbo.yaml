@@ -1,0 +1,48 @@
+name: Z-Image Turbo
+model_file: z_image_turbo_fp8.safetensors
+category: diffusion_models
+workflow: z_image_txt2img
+source: https://huggingface.co/Tongyi-MAI/Z-Image-Turbo
+params:
+  steps: 10
+  cfg: 1.0
+  sampler: euler
+  scheduler: simple
+  model_shift: 3.0
+  width: 1024
+  height: 1536
+  clip_name: qwen_3_4b.safetensors
+  clip_type: lumina2
+  vae_name: ae.safetensors
+  latent_node: EmptySD3LatentImage
+prompt:
+  style: natural_language
+  guide: 使用长句自然语言描述场景与人物，重要视觉细节放前面；CFG 保持 1（蒸馏已内化 CFG）。
+negative_default: low quality, blurry, deformed face, extra limbs, fused fingers, bad anatomy, watermark, text, logo
+
+# 官方/社区推荐分辨率（Z-Image 系列：支持 512~2048px，建议 1~2MP）
+resolution_presets:
+  - name: 竖版 · 角色
+    width: 832
+    height: 1216
+    note: 官方推荐 1MP，竖版角色构图
+  - name: 竖版 · 全身
+    width: 768
+    height: 1344
+    note: 全身像 / 长构图
+  - name: 方图 · 通用
+    width: 1024
+    height: 1024
+    note: 官方推荐方图
+  - name: 横版 · 场景
+    width: 1216
+    height: 832
+    note: 官方推荐横版场景
+  - name: 高画质 · 竖版
+    width: 1024
+    height: 1536
+    note: 约 1.57MP，高画质（需足够显存）
+  - name: 高画质 · 电影宽幅
+    width: 1920
+    height: 1088
+    note: 约 2.08MP，电影宽幅（需足够显存）

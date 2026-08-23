@@ -1,0 +1,9 @@
+fastapi>=0.141
+uvicorn>=0.52
+requests>=2.34
+PyYAML>=6.0
+python-multipart>=0.0.32
+openai>=1.109.1
+python-dotenv>=1.2.2
+websocket-client>=1.8.0
+ruamel.yaml>=0.18.6

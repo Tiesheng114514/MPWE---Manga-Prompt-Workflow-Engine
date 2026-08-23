@@ -1,0 +1,16 @@
+# MPWE 项目维护的 ComfyUI 模型路径配置
+# 启动 ComfyUI 后端时传入：--extra-model-paths-config 本文件
+comfy_desktop_shared:
+    base_path: D:\Comfy-Desktop\ComfyUI-Shared
+    checkpoints: models/checkpoints
+    diffusion_models: models/diffusion_models
+    text_encoders: models/text_encoders
+    vae: models/vae
+    loras: models/loras
+    controlnet: models/controlnet
+    model_patches: models/model_patches
+    upscale_models: models/upscale_models
+    bbox: models/detection
+    detection: models/detection
+    input: input
+    output: output

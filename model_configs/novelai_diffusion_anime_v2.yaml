@@ -1,0 +1,48 @@
+name: NovelAI Diffusion Anime V2
+model_file: NovelAI Diffusion Anime V2.safetensors
+category: checkpoints
+workflow: txt2img
+source: "https://huggingface.co/NovelAI/nai-anime-v2（官方：CLIP skip 必须为 2，支持 832x1216 等 1MP 分辨率）"
+params:
+  steps: 28
+  cfg: 11.0
+  sampler: euler
+  scheduler: normal
+  width: 832
+  height: 1216
+  clip_skip: 2
+prompt:
+  style: danbooru_tags
+  guide: Danbooru 标签；CLIP skip 2 为官方硬性要求，不可省略。
+negative_default: lowres, bad anatomy, bad hands, worst quality, low quality, blurry, watermark, text
+
+# 画质增强预设（超分放大重绘 + 脸部修复）
+quality:
+  hires:
+    upscale_model: 2x_IllustrationJaNai_V3detail_SPAN_S_40k_fp16.safetensors
+    denoise: 0.45
+    steps: 20
+    cfg: 11.0
+  face_detailer:
+    detector: bbox/face_yolov8m.pt
+    threshold: 0.5
+    denoise: 0.35
+    steps: 16
+    cfg: 11.0
+    guide_size: 512
+    max_size: 1024
+
+# 官方推荐分辨率（NovelAI 官方：支持 1MP 分辨率，如 832x1216、1024x1024、1216x832）
+resolution_presets:
+  - name: 竖版 · 官方推荐
+    width: 832
+    height: 1216
+    note: 官方 1MP 竖版
+  - name: 方图 · 官方推荐
+    width: 1024
+    height: 1024
+    note: 官方 1MP 方图
+  - name: 横版 · 官方推荐
+    width: 1216
+    height: 832
+    note: 官方 1MP 横版

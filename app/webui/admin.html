@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理员后台 - MPWE</title>
+  <link rel="stylesheet" href="/css/admin.css?v=20260822f">
+</head>
+<body class="admin-shell">
+  <header class="admin-topbar">
+    <div class="admin-brand">
+      <span class="mini-logo">✦</span>
+      <h1>MPWE 管理员后台</h1>
+      <span class="ver">v0.2</span>
+    </div>
+    <div class="admin-top-actions">
+      <span id="admin-session-hint" class="status-note"></span>
+      <button id="logout-btn" class="btn-ghost" type="button">退出登录</button>
+    </div>
+  </header>
+
+  <div class="admin-body-row">
+    <aside class="admin-side">
+      <a class="admin-nav-item active" data-tab="overview" href="#">概览</a>
+      <a class="admin-nav-item" data-tab="agents" href="#">AI 提示词 Agent</a>
+      <a class="admin-nav-item" data-tab="password" href="#">修改密码</a>
+      <a class="admin-nav-item" data-tab="users" href="#">用户管理</a>
+      <a class="admin-nav-item" data-tab="gpu" href="#">GPU 算力消耗</a>
+      <a class="admin-nav-item" data-tab="api_stats" href="#">API 消耗</a>
+    </aside>
+
+    <main class="admin-content">
+      <section id="tab-overview" class="admin-tab active">
+        <div class="tab-card">
+          <h2>概览</h2>
+          <p class="desc">服务运行状态与关键配置一览</p>
+          <div id="overview-cards" class="overview-cards"></div>
+        </div>
+      </section>
+
+      <section id="tab-agents" class="admin-tab">
+        <div class="tab-card">
+          <h2>AI 提示词 Agent 管理</h2>
+          <p class="desc">
+            直接编辑各 Agent 的系统提示词，保存后立即生效（无需重启）。
+            修改会写入 app/prompting/agent_prompts.yaml（注意保持全英文与原有格式）。
+          </p>
+          <div class="form-block">
+            <label>选择 Agent
+              <select id="agent-select"></select>
+            </label>
+            <label>名字（name）
+              <input id="agent-name" type="text">
+            </label>
+            <label>说明（description）
+              <input id="agent-desc" type="text">
+            </label>
+            <label>系统提示词（prompt）
+              <textarea id="agent-prompt" rows="18" spellcheck="false"></textarea>
+            </label>
+            <div class="form-row">
+              <button id="agent-save-btn" class="btn-primary" type="button">保存修改</button>
+              <span id="agent-save-status" class="status-note"></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-password" class="admin-tab">
+        <div class="tab-card">
+          <h2>修改管理密码</h2>
+          <p class="desc">密码长度 8-128 位，修改后立即生效</p>
+          <div class="form-block">
+            <label>原密码
+              <input id="pwd-old" type="text" autocomplete="off">
+            </label>
+            <label>新密码（8-128 位）
+              <input id="pwd-new" type="text" autocomplete="off">
+            </label>
+            <label>确认新密码
+              <input id="pwd-confirm" type="text" autocomplete="off">
+            </label>
+            <div class="form-row">
+              <button id="pwd-btn" class="btn-primary" type="button">修改密码</button>
+              <span id="pwd-status" class="status-note"></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-users" class="admin-tab">
+        <div class="tab-card">
+          <h2>用户管理</h2>
+          <p class="desc">用户列表、邀请码管理、余额充值 / 调整、停用启用、重置密码。</p>
+          <h3>邀请码</h3>
+          <div class="form-block">
+            <label>创建邀请码（每行一个，可批量）
+              <textarea id="invite-codes-input" rows="4" placeholder="CODE1&#10;CODE2"></textarea>
+            </label>
+            <label>每个邀请码最多可邀请人数
+              <input id="invite-max-input" type="number" value="1" min="1">
+            </label>
+            <div class="form-row">
+              <button id="invite-create-btn" class="btn-primary" type="button">创建邀请码</button>
+              <span id="invite-create-status" class="status-note"></span>
+            </div>
+            <table class="admin-table">
+              <thead>
+                <tr><th>邀请码</th><th>已用 / 上限</th><th>创建时间</th><th>操作</th></tr>
+              </thead>
+              <tbody id="invite-codes-body"></tbody>
+            </table>
+          </div>
+          <h3>用户列表</h3>
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>ID</th><th>用户名</th><th>邀请码</th><th>状态</th>
+                <th>API 钱包</th><th>图片钱包</th><th>API 消耗</th><th>图片消耗</th><th>算力</th><th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="users-body"></tbody>
+          </table>
+          <div id="user-detail" class="user-detail" hidden></div>
+        </div>
+      </section>
+
+      <section id="tab-gpu" class="admin-tab">
+        <div class="tab-card">
+          <h2>GPU 算力消耗</h2>
+          <p class="desc">
+            按用户统计本地 GPU 算力：真实 GPU 耗时（秒）+ 估算算力（TFLOPS·时，按步数/分辨率/画质增强估算，用于横向比较）。
+          </p>
+          <div class="overview-cards" id="gpu-total-cards"></div>
+          <table class="admin-table">
+            <thead>
+              <tr><th>用户</th><th>任务数</th><th>GPU 耗时（秒）</th><th>估算算力</th></tr>
+            </thead>
+            <tbody id="gpu-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="tab-api_stats" class="admin-tab">
+        <div class="tab-card">
+          <h2>API 消耗</h2>
+          <p class="desc">按用户统计 DeepSeek API 调用：请求数、token 数、金额（与图片计费分开）。</p>
+          <div class="overview-cards" id="api-total-cards"></div>
+          <table class="admin-table">
+            <thead>
+              <tr><th>用户</th><th>请求数</th><th>总 token</th><th>金额（银币）</th></tr>
+            </thead>
+            <tbody id="api-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/js/admin.js?v=20260822f"></script>
+</body>
+</html>

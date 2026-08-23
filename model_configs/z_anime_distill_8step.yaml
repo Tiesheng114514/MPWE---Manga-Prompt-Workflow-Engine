@@ -1,0 +1,48 @@
+name: Z-Anime Distill 8-Step
+model_file: z-anime-distill-8step-fp8.safetensors
+category: diffusion_models
+workflow: z_image_txt2img
+source: https://huggingface.co/SeeSee21/Z-Anime
+params:
+  steps: 8
+  cfg: 1.0
+  sampler: euler_ancestral
+  scheduler: beta
+  model_shift: 3.0
+  width: 1024
+  height: 1536
+  clip_name: qwen_3_4b.safetensors
+  clip_type: lumina2
+  vae_name: ae.safetensors
+  latent_node: EmptySD3LatentImage
+prompt:
+  style: natural_language
+  guide: 用自然语言而非标签列表；最重要的视觉细节放最前面；明确光照；负面提示词效果显著，强烈建议填写。
+negative_default: low quality, blurry, deformed face, extra limbs, fused fingers, bad anatomy, watermark, text
+
+# 官方推荐分辨率（Z-Anime 官方 README / 社区指南，最高支持 2048x2048）
+resolution_presets:
+  - name: 竖版 · 角色立绘
+    width: 832
+    height: 1216
+    note: 官方推荐，竖版角色/立绘
+  - name: 竖版 · 全身
+    width: 768
+    height: 1344
+    note: 全身构图
+  - name: 方图 · 通用
+    width: 1024
+    height: 1024
+    note: 官方推荐方图
+  - name: 横版 · 风景
+    width: 1216
+    height: 832
+    note: 官方推荐横版风景
+  - name: 高画质 · 竖版
+    width: 1024
+    height: 1536
+    note: 高画质档（约 1.57MP）
+  - name: 高画质 · 电影宽幅
+    width: 1920
+    height: 1088
+    note: 电影宽幅（约 2.08MP）

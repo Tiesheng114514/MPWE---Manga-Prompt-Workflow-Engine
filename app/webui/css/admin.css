@@ -1,0 +1,344 @@
+/* ============================================================
+   MPWE 管理员后台 —— 全新设计（深色专业面板风）
+   ============================================================ */
+
+:root {
+  --bg: #0b0e17;
+  --bg-2: #111524;
+  --panel: rgba(255, 255, 255, 0.04);
+  --panel-hover: rgba(255, 255, 255, 0.07);
+  --border: rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --text: #e9ecf5;
+  --muted: #98a2b8;
+  --accent: #7c5cff;
+  --accent-2: #4f8cff;
+  --accent-3: #22d3ee;
+  --ok: #34d399;
+  --err: #fb7185;
+  --radius: 14px;
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { color-scheme: dark; }
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(42% 34% at 14% 8%, rgba(124, 92, 255, 0.16), transparent 65%),
+    radial-gradient(38% 30% at 88% 14%, rgba(79, 140, 255, 0.14), transparent 65%),
+    var(--bg);
+  color: var(--text);
+  font-family: "Inter", "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+  font-size: 14px;
+}
+
+.muted { color: var(--muted); font-size: 12px; }
+.hidden { display: none !important; }
+
+/* ---------- 登录页 ---------- */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  background: rgba(15, 19, 32, 0.82);
+  border: 1px solid var(--border-strong);
+  border-radius: 20px;
+  padding: 40px 36px 34px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(20px);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.login-logo {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff;
+  font-size: 20px;
+  box-shadow: 0 6px 22px rgba(124, 92, 255, 0.45);
+}
+
+.login-brand h1 { font-size: 20px; font-weight: 800; letter-spacing: 0.3px; }
+.login-brand span { color: var(--muted); font-size: 12px; }
+
+.login-field label {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 7px;
+}
+
+input, select, textarea {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.32);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  padding: 10px 13px;
+  font-size: 13px;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent-2);
+  box-shadow: 0 0 0 3px rgba(79, 140, 255, 0.16);
+}
+
+textarea { resize: vertical; line-height: 1.6; }
+
+.btn-primary {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 11px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  box-shadow: 0 8px 26px rgba(96, 110, 255, 0.35);
+  transition: transform 0.2s, filter 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.08); }
+.btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-primary.busy::after { content: " ···"; animation: pulse 1s ease-in-out infinite; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.error-box {
+  padding: 10px 13px;
+  background: rgba(251, 113, 133, 0.1);
+  border: 1px solid rgba(251, 113, 133, 0.35);
+  color: var(--err);
+  border-radius: 10px;
+  font-size: 13px;
+  white-space: pre-wrap;
+}
+
+/* ---------- 主框架：顶栏 + 侧栏 + 内容 ---------- */
+.admin-shell { min-height: 100vh; display: flex; flex-direction: column; }
+
+.admin-topbar {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  background: rgba(10, 13, 22, 0.72);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(16px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.admin-brand { display: flex; align-items: center; gap: 11px; }
+.admin-brand .mini-logo {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff;
+  font-size: 14px;
+}
+.admin-brand h1 { font-size: 15px; font-weight: 700; }
+.admin-brand .ver { color: var(--muted); font-size: 11px; font-weight: 400; }
+
+.admin-top-actions { display: flex; align-items: center; gap: 14px; }
+
+.btn-ghost {
+  padding: 7px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+
+.btn-ghost:hover { color: var(--text); border-color: rgba(255, 255, 255, 0.3); }
+
+.admin-body-row {
+  flex: 1;
+  display: flex;
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px 28px 40px;
+  gap: 22px;
+  align-items: flex-start;
+}
+
+.admin-side {
+  width: 190px;
+  flex: none;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px;
+  position: sticky;
+  top: 84px;
+}
+
+.admin-nav-item {
+  display: block;
+  padding: 10px 14px;
+  border-radius: 9px;
+  color: var(--muted);
+  font-size: 13.5px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  margin-bottom: 2px;
+}
+
+.admin-nav-item:hover { background: var(--panel-hover); color: var(--text); }
+.admin-nav-item.active {
+  background: linear-gradient(135deg, rgba(124, 92, 255, 0.22), rgba(79, 140, 255, 0.16));
+  color: #fff;
+  border: 1px solid rgba(124, 92, 255, 0.35);
+}
+.admin-nav-item.disabled { opacity: 0.38; cursor: not-allowed; pointer-events: none; }
+
+.admin-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-tab { display: none; }
+.admin-tab.active { display: block; }
+
+.tab-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px 24px;
+  box-shadow: var(--shadow);
+  margin-bottom: 18px;
+}
+
+.tab-card h2 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+.tab-card .desc { color: var(--muted); font-size: 12.5px; line-height: 1.7; margin-bottom: 18px; }
+
+/* 概览卡片 */
+.overview-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 12px;
+}
+
+.overview-card {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 15px 16px;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.overview-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+.overview-card h3 { color: var(--muted); font-size: 12px; font-weight: 600; margin-bottom: 7px; }
+.overview-card p { font-size: 14px; word-break: break-all; }
+
+/* 表单区 */
+.form-block { display: flex; flex-direction: column; gap: 14px; margin-top: 6px; }
+.form-block label { display: flex; flex-direction: column; gap: 6px; color: var(--muted); font-size: 12px; font-weight: 600; }
+.form-block textarea { font-family: Consolas, "Courier New", monospace; font-size: 12.5px; }
+.form-row { display: flex; align-items: center; gap: 12px; }
+.form-row .btn-primary { width: auto; padding: 10px 22px; }
+
+.status-note { color: var(--muted); font-size: 12px; }
+
+@media (max-width: 900px) {
+  .admin-body-row { flex-direction: column; }
+  .admin-side { width: 100%; position: static; display: flex; overflow-x: auto; }
+  .admin-nav-item { flex: none; }
+}
+
+/* ---------------- 用户管理 / 统计表格 ---------------- */
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0 18px;
+  font-size: 13px;
+}
+
+.admin-table th,
+.admin-table td {
+  border: 1px solid var(--border);
+  padding: 7px 9px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.admin-table th {
+  color: var(--muted);
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.03);
+  white-space: nowrap;
+}
+
+.admin-table code {
+  background: rgba(255, 255, 255, 0.07);
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.admin-table button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.user-detail {
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.user-detail h3 {
+  margin: 14px 0 8px;
+}
+
+.form-row input,
+.form-row select {
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--text);
+}

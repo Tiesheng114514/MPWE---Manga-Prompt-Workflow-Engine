@@ -1,0 +1,67 @@
+# MPWE 运行配置
+server:
+  host: 127.0.0.1
+  port: 8642
+
+# 管理员后台（独立端口，与公网 WebUI 分离，勿暴露到公网）
+admin:
+  host: 127.0.0.1
+  port: 8643
+
+comfyui:
+  base_url: http://127.0.0.1:8188
+  # 并行实例列表（多实例并行跑图）：每个实例同时只跑 1 个任务，
+  # 调度器按显存预算自动决定能并行几个（SD1.5 小分辨率可 2 路，大模型只能 1 路）。
+  # 与 scripts/start_comfyui.bat 的 MPWE_COMFYUI_WORKERS 保持一致。
+  workers:
+    - http://127.0.0.1:8188
+  client_id: mpwe-webui
+  timeout: 30
+
+# 任务队列与并行准入
+queue:
+  max_concurrent_per_user: 2   # 每用户最多同时运行几个任务（防单用户占满队列）
+  poll_interval_s: 0.5         # 调度器轮询间隔（秒）
+  max_queue_dispatch: 50       # 每轮最多尝试派发多少个排队任务
+  worker_down_grace_s: 30      # 实例提交失败后的临时拉黑时长（秒）
+  max_dispatch_attempts: 3     # 连续提交失败多少次后任务判失败
+
+# 显存预算（0 表示用 data/vram_estimates.json 里的值）
+vram:
+  estimates_file: ""
+  total_vram_mb: 0
+  headroom_mb: 0
+
+# AI 提示词 Agent 的 LLM 配置（OpenAI 兼容；API Key 放在项目根目录 .env 的 OPENAI_API_KEY）
+llm:
+  base_url: https://api.deepseek.com
+  model: deepseek-v4-flash
+  timeout: 120
+  max_tokens: 4000
+  disable_thinking: true
+
+# 人机验证（Cloudflare Turnstile；Site/Secret Key 放在 .env，不提交 git）
+turnstile:
+  enabled: true
+
+# 计费（双钱包：API 钱包 + 图片钱包，两本账分开算）
+billing:
+  api:
+    # 价格单位：元 / 百万 tokens（DeepSeek V4 Flash 官方峰谷定价，2026-08-17 起生效）
+    peak_hours: [[9, 12], [14, 18]]   # 本地时间高峰时段，其余为闲时（价格减半）
+    off_peak:
+      input_cache_hit: 0.05
+      input_cache_miss: 1.5
+      output: 4.5
+    peak:
+      input_cache_hit: 0.10
+      input_cache_miss: 3.0
+      output: 9.0
+  image:
+    price_per_image: 0.3              # 元 / 张（本地 GPU 绘图）
+  signup_bonus:                       # 新用户注册赠送额度（API=银币，图片=金币）
+    api: 0.5
+    image: 3.0
+  free_recharge:                      # 右上角「免费充值额度」（过 Cloudflare 验证后一次性到账）
+    api: 0.5
+    image: 10.0

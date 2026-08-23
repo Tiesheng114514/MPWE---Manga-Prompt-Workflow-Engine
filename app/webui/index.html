@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MPWE - 漫画创作工作流引擎</title>
+  <link rel="stylesheet" href="./css/style.css?v=20260822h">
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+</head>
+<body>
+  <div class="bg-decor" aria-hidden="true">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+
+  <header>
+    <div class="brand">
+      <span class="logo">✦</span>
+      <h1>MPWE</h1>
+      <span class="subtitle">Manga Prompt Workflow Engine</span>
+    </div>
+    <div class="status-bar">
+      <span class="status-pill"><span id="backend-dot" class="dot"></span>后端</span>
+      <span class="status-pill"><span id="comfyui-dot" class="dot"></span>绘画GPU服务器</span>
+      <span id="status-detail" class="status-detail"></span>
+    </div>
+    <div class="user-area" id="user-area" hidden>
+      <span id="user-chip" class="user-chip"></span>
+      <span id="wallet-chip" class="wallet-chip" title="API 钱包（银币）/ 图片钱包（金币）"></span>
+      <button id="free-claim-btn" class="ghost-btn" type="button" title="通过人机验证领取免费充值额度（每账号一次）">🪙 免费充值额度</button>
+      <button id="logout-btn" class="ghost-btn" type="button">退出</button>
+    </div>
+  </header>
+
+  <main>
+    <aside class="panel params">
+      <h2>生成参数</h2>
+      <div class="form-grid">
+        <label>模型类型
+          <select id="model_type">
+            <option value="checkpoint">SD / SDXL Checkpoint</option>
+            <option value="z_image">Z-Image 系列（扩散模型）</option>
+            <option value="anima">Anima 系列（扩散模型）</option>
+          </select>
+        </label>
+
+        <div id="checkpoint-fields">
+          <label>模型（Checkpoint）
+            <select id="checkpoint"></select>
+          </label>
+          <p class="hint" id="checkpoint-hint"></p>
+        </div>
+
+        <div id="diffusion-fields" class="hidden">
+          <label>扩散模型（UNET）
+            <select id="unet"></select>
+          </label>
+          <p class="hint" id="model-hint"></p>
+        </div>
+
+        <details class="collapse-card" id="agent-card" open>
+          <summary>AI 提示词 Agent</summary>
+          <div class="collapse-body">
+            <p class="hint" id="agent-hint">用大白话描述你想画的画面，Agent 会自动生成所选模型特调的完整提示词</p>
+            <label>画面描述
+              <textarea id="agent_input" rows="2" placeholder="例如：雨夜一个女生撑着透明伞站在路灯下，半身构图，要有氛围感"></textarea>
+            </label>
+            <div class="agent-actions">
+              <button id="agent-btn" class="primary" type="button">⚡ AI 生成提示词</button>
+            </div>
+            <div id="agent-progress-wrap" class="progress-wrap" hidden>
+              <div class="progress-track"><div id="agent-progress-bar" class="progress-bar"></div></div>
+              <span id="agent-progress-text" class="muted"></span>
+            </div>
+            <span id="agent-status" class="muted"></span>
+            <details id="agent-brief" class="agent-brief" hidden>
+              <summary>中文需求书（Agent 中间产物，可展开查看）</summary>
+              <pre id="agent-brief-text"></pre>
+            </details>
+          </div>
+        </details>
+
+        <details class="collapse-card" id="prompt-card">
+          <summary>提示词</summary>
+          <div class="collapse-body">
+            <label>正向提示词
+              <textarea id="prompt" rows="3" placeholder="masterpiece, best quality, 1girl, ..."></textarea>
+            </label>
+            <label>负面提示词
+              <textarea id="negative_prompt" rows="2" placeholder="lowres, bad anatomy, bad hands, ..."></textarea>
+            </label>
+          </div>
+        </details>
+
+        <div class="row">
+          <label>宽
+            <input id="width" type="number" value="1024" min="64" step="64">
+          </label>
+          <label>高
+            <input id="height" type="number" value="1024" min="64" step="64">
+          </label>
+        </div>
+
+        <div id="res-presets" class="res-presets" hidden>
+          <span class="res-presets-label">分辨率预设（点击套用，也可直接填写宽高）</span>
+          <div id="res-preset-list" class="res-preset-list"></div>
+        </div>
+
+        <details class="collapse-card" id="advanced-card">
+          <summary>高级参数（预设已自动配置）</summary>
+          <div class="collapse-body">
+            <div class="row">
+              <label>步数
+                <input id="steps" type="number" value="20" min="1" max="150">
+              </label>
+              <label>CFG
+                <input id="cfg" type="number" value="6.0" min="0" step="0.5">
+              </label>
+            </div>
+            <label>采样器
+              <select id="sampler"></select>
+            </label>
+            <label>调度器
+              <select id="scheduler"></select>
+            </label>
+            <div class="row">
+              <label>种子（-1 随机）
+                <input id="seed" type="number" value="-1">
+              </label>
+              <button id="random-seed" class="icon-btn" type="button" title="随机种子">🎲</button>
+            </div>
+            <div class="row">
+              <label>批量
+                <input id="batch_size" type="number" value="1" min="1" max="8">
+              </label>
+              <label>文件名前缀
+                <input id="filename_prefix" type="text" value="MPWE">
+              </label>
+            </div>
+            <input type="hidden" id="clip_skip" value="0">
+          </div>
+        </details>
+
+        <details class="quality-section" id="lora-card">
+          <summary>LoRA 叠加</summary>
+          <p class="hint">勾选要加载的 LoRA，权重已按官方/社区推荐预设</p>
+          <div id="lora-list"></div>
+        </details>
+      </div>
+
+      <button id="generate-btn" class="primary" disabled>生成</button>
+    </aside>
+
+    <section class="panel result">
+      <div class="result-head">
+        <h2>生成结果</h2>
+        <span id="job-status" class="muted">空闲</span>
+      </div>
+
+      <div id="progress-wrap" class="progress-wrap" hidden>
+        <div class="progress-track"><div id="progress-bar" class="progress-bar"></div></div>
+        <div class="progress-meta">
+          <span id="progress-text" class="muted"></span>
+          <span id="queue-meta" class="muted"></span>
+          <button id="cancel-btn" class="danger-btn" type="button" hidden>✕ 取消任务</button>
+        </div>
+      </div>
+
+      <div id="result-box" class="result-box">
+        <div id="result-placeholder" class="placeholder">点击「生成」开始创作</div>
+        <img id="result-image" alt="生成结果" hidden>
+      </div>
+
+      <div id="result-nav" class="result-nav" hidden>
+        <button id="prev-img" class="nav-btn" type="button" title="上一张">‹</button>
+        <span id="img-counter" class="muted"></span>
+        <button id="next-img" class="nav-btn" type="button" title="下一张">›</button>
+      </div>
+      <div id="result-thumbs" class="result-thumbs" hidden></div>
+
+      <div id="error-box" class="error-box" hidden></div>
+
+      <div id="quality-panel" class="quality-panel" hidden>
+        <h3>画质增强（二次创作）</h3>
+        <p class="hint">对当前生成图进行超分重绘 / 脸部修复</p>
+        <label class="check">
+          <input type="checkbox" id="hires_fix" checked>
+          超分放大重绘（Hires fix）
+        </label>
+        <label>超分模型
+          <select id="upscale_model"></select>
+        </label>
+        <div class="row">
+          <label>重绘强度
+            <input id="hires_denoise" type="number" value="0.45" min="0.05" max="1" step="0.05">
+          </label>
+          <label>重绘步数
+            <input id="hires_steps" type="number" value="20" min="1" max="150">
+          </label>
+        </div>
+        <label class="check">
+          <input type="checkbox" id="face_detailer" checked>
+          脸部修复（FaceDetailer）
+        </label>
+        <label>脸部检测模型
+          <select id="face_detector">
+            <option value="bbox/face_yolov8m.pt">face_yolov8m（质量优先）</option>
+            <option value="bbox/face_yolov8n.pt">face_yolov8n（速度优先）</option>
+          </select>
+        </label>
+        <div class="row">
+          <label>修复强度
+            <input id="face_denoise" type="number" value="0.35" min="0.05" max="1" step="0.05">
+          </label>
+          <label>修复步数
+            <input id="face_steps" type="number" value="16" min="1" max="150">
+          </label>
+        </div>
+        <button id="quality-btn" class="primary" type="button">开始画质增强</button>
+      </div>
+
+      <h3>历史记录</h3>
+      <ul id="history" class="history"></ul>
+    </section>
+  </main>
+
+  <div id="lightbox" class="lightbox" hidden>
+    <button id="lightbox-close" class="lb-btn lb-close" type="button" title="关闭（Esc）">✕</button>
+    <button id="lightbox-prev" class="lb-btn lb-prev" type="button" title="上一张（←）">‹</button>
+    <div class="lightbox-stage">
+      <img id="lightbox-img" alt="放大预览" title="滚轮缩放 · 拖动查看 · 双击还原">
+      <div class="lightbox-meta">
+        <span id="lightbox-counter" class="muted"></span>
+        <span id="lightbox-zoom" class="lb-zoom" title="双击图片或点击此处还原 100%">100%</span>
+        <a id="lightbox-download" class="lb-download" download title="下载原图">⬇ 下载</a>
+      </div>
+    </div>
+    <button id="lightbox-next" class="lb-btn lb-next" type="button" title="下一张（→）">›</button>
+  </div>
+
+  <div id="auth-modal" class="auth-modal-overlay" hidden>
+    <div class="auth-modal">
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab active" data-tab="login">登录</button>
+        <button type="button" class="auth-tab" data-tab="register">注册</button>
+      </div>
+      <form id="login-form" class="auth-form">
+        <label>用户名
+          <input id="login-username" type="text" autocomplete="username" autofocus>
+        </label>
+        <label>密码
+          <input id="login-password" type="password" autocomplete="current-password">
+        </label>
+        <button type="submit" class="primary">登 录</button>
+        <span id="login-msg" class="muted"></span>
+      </form>
+      <form id="register-form" class="auth-form" hidden>
+        <p class="hint" id="reg-hint">需要管理员发放的邀请码；注册后自动登录。</p>
+        <label>用户名
+          <input id="reg-username" type="text" autocomplete="username">
+        </label>
+        <label>密码（8-128 位）
+          <input id="reg-password" type="password" autocomplete="new-password">
+        </label>
+        <label>邀请码
+          <input id="reg-invite" type="text" placeholder="管理员发给你的邀请码">
+        </label>
+        <button type="submit" class="primary" id="reg-submit">注 册</button>
+        <span id="reg-msg" class="muted"></span>
+      </form>
+    </div>
+  </div>
+
+  <div id="free-modal" class="auth-modal-overlay" hidden>
+    <div class="auth-modal">
+      <h2 class="free-title">🪙 免费充值额度</h2>
+      <p class="hint" id="free-desc">通过人机验证后，一次性到账免费额度（每账号限一次）。</p>
+      <div id="free-turnstile-box" class="turnstile-box"></div>
+      <div id="free-turnstile-status" class="turnstile-status" hidden></div>
+      <button type="button" id="free-turnstile-retry" class="ghost-btn" hidden>重新验证</button>
+      <div class="form-row">
+        <button type="button" id="free-claim-submit" class="primary" disabled>领取</button>
+        <button type="button" id="free-modal-close" class="ghost-btn">关闭</button>
+      </div>
+      <span id="free-claim-msg" class="muted"></span>
+    </div>
+  </div>
+
+  <script src="./js/features/quality.js?v=20260822d"></script>
+  <script src="./js/features/loras.js?v=20260822d"></script>
+  <script src="./js/app.js?v=20260822j"></script>
+</body>
+</html>

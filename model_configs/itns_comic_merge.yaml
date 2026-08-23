@@ -1,0 +1,59 @@
+name: ItN's Comic Merge
+model_file: ItNsComicMerge.safetensors
+category: checkpoints
+workflow: txt2img
+source: 本地模型（SD1.5 系漫画合并模型，配套同名工作流）
+params:
+  steps: 20
+  cfg: 6.0
+  sampler: euler
+  scheduler: normal
+  width: 768
+  height: 1152
+prompt:
+  style: danbooru_tags
+  guide: 使用 Danbooru 风格标签 + 质量标签，适合漫画/二次元场景。
+negative_default: lowres, bad anatomy, bad hands, worst quality, low quality, extra digits, watermark, text
+
+# 画质增强预设（超分放大重绘 + 脸部修复；SD1.5 系建议重绘强度 0.35）
+quality:
+  hires:
+    upscale_model: 2x_IllustrationJaNai_V3detail_SPAN_S_40k_fp16.safetensors
+    denoise: 0.4
+    steps: 16
+    cfg: 6.0
+  face_detailer:
+    detector: bbox/face_yolov8m.pt
+    threshold: 0.5
+    denoise: 0.35
+    steps: 14
+    cfg: 6.0
+    guide_size: 512
+    max_size: 1024
+
+# 推荐分辨率（SD1.5 系模型：512 基准，显存允许可上 768 档）
+resolution_presets:
+  - name: 方图 · 基础
+    width: 512
+    height: 512
+    note: SD1.5 基准档
+  - name: 方图 · 中档
+    width: 640
+    height: 640
+    note: 折中档
+  - name: 竖版 · 半身
+    width: 512
+    height: 768
+    note: SD1.5 常用竖版
+  - name: 横版 · 场景
+    width: 768
+    height: 512
+    note: SD1.5 常用横版
+  - name: 方图 · 高分辨率
+    width: 768
+    height: 768
+    note: 显存允许时
+  - name: 竖版 · 漫画页
+    width: 768
+    height: 1152
+    note: 当前默认，长页构图

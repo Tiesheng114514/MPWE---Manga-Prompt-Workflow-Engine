@@ -1,0 +1,59 @@
+name: ChenkinNoob XL V0.5
+model_file: ChenkinNoob-XL-V0.5.safetensors
+category: checkpoints
+workflow: txt2img
+source: "https://civitai.com/models/2167995（官方推荐：25-30 步，CFG 5-6，Euler a）"
+params:
+  steps: 28
+  cfg: 6.0
+  sampler: euler_ancestral
+  scheduler: normal
+  width: 1024
+  height: 1024
+prompt:
+  style: danbooru_tags
+  guide: NoobAI 系：标签 + 质量词（masterpiece, best quality, newest, year 2026）。
+negative_default: lowres, bad anatomy, bad hands, worst quality, low quality, blurry, watermark, text
+
+# 画质增强预设（超分放大重绘 + 脸部修复）
+quality:
+  hires:
+    upscale_model: 2x_IllustrationJaNai_V3detail_SPAN_S_40k_fp16.safetensors
+    denoise: 0.45
+    steps: 20
+    cfg: 6.0
+  face_detailer:
+    detector: bbox/face_yolov8m.pt
+    threshold: 0.5
+    denoise: 0.35
+    steps: 16
+    cfg: 6.0
+    guide_size: 512
+    max_size: 1024
+
+# 社区推荐分辨率（NoobAI 系：1024x1024 基准档，常用 832x1216 / 1216x832 等）
+resolution_presets:
+  - name: 方图 · 通用
+    width: 1024
+    height: 1024
+    note: 1024 基准档
+  - name: 竖版 · 半身
+    width: 896
+    height: 1152
+    note: NoobAI 系常用
+  - name: 竖版 · 全身
+    width: 832
+    height: 1216
+    note: NoobAI 系常用
+  - name: 横版 · 半身
+    width: 1152
+    height: 896
+    note: NoobAI 系常用
+  - name: 横版 · 场景
+    width: 1216
+    height: 832
+    note: NoobAI 系常用
+  - name: 竖版 · 高挑
+    width: 768
+    height: 1344
+    note: 长构图
