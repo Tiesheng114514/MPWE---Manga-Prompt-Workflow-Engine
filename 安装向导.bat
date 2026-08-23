@@ -157,16 +157,16 @@ echo [5/6] 设置共享模型目录 ...
 set "MODEL_ROOT="
 :ask_model
 if not defined MODEL_ROOT (
-    if exist "D:\Comfy-Desktop\ComfyUI-Shared\checkpoints" set "MODEL_ROOT=D:\Comfy-Desktop\ComfyUI-Shared"
-    if not defined MODEL_ROOT if exist "%COMFY_ROOT%\models\checkpoints" set "MODEL_ROOT=%COMFY_ROOT%\models"
+    if exist "D:\Comfy-Desktop\ComfyUI-Shared\models\checkpoints" set "MODEL_ROOT=D:\Comfy-Desktop\ComfyUI-Shared"
+    if not defined MODEL_ROOT if exist "%COMFY_ROOT%\models\checkpoints" set "MODEL_ROOT=%COMFY_ROOT%"
 )
 if defined MODEL_ROOT goto model_found
-set /p "MODEL_ROOT=   请输入共享模型目录（内含 checkpoints、loras 等子文件夹）: "
+set /p "MODEL_ROOT=   请输入共享模型根目录（内含 models\checkpoints、models\loras 等子文件夹）: "
 :model_found
-if not exist "%MODEL_ROOT%\checkpoints" (
+if not exist "%MODEL_ROOT%\models\checkpoints" (
     echo.
-    echo   [错误] %MODEL_ROOT% 下没有 checkpoints 文件夹。
-    echo   正确示例: D:\Comfy-Desktop\ComfyUI-Shared
+    echo   [错误] %MODEL_ROOT% 下没有 models\checkpoints 文件夹。
+    echo   正确示例: D:\Comfy-Desktop\ComfyUI-Shared（里面要有 models\checkpoints\）
     echo.
     set "MODEL_ROOT="
     goto ask_model
