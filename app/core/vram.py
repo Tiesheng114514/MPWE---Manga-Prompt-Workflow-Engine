@@ -78,7 +78,16 @@ class VramBudget:
         return max(1, self.total_mb - self.headroom_mb)
 
     def fits(self, reserved_mb: int, cost_mb: int) -> bool:
-        return reserved_mb + cost_mb <= self.capacity_mb()
+        capacity = self.capacity_mb()
+        reserved_mb = int(reserved_mb)
+        cost_mb = int(cost_mb)
+        if cost_mb > capacity:
+            # 单个任务本身就超过可用预算（典型：8G 卡跑 SDXL 大模型 + LoRA，
+            # 保守估算会顶到整卡显存）。此时只要没有别的任务在跑就放行，
+            # 让它独占运行；ComfyUI 自己会做显存换入换出。
+            # 否则会出现"永远凑不够预算"的死锁：任务卡在排队里再也不出来。
+            return reserved_mb <= 0
+        return reserved_mb + cost_mb <= capacity
 
     # ---------------- 峰值估算 ----------------
     def model_peak_mb(

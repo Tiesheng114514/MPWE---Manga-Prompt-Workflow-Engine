@@ -172,6 +172,13 @@ class JobScheduler:
                         logger.warning("任务 %s 提交失败将重试（第 %d 次）: %s", job["id"], attempts, exc)
                     continue
                 self.jobs.claim(job["id"], worker.base_url, prompt_id, cost)
+                if cost > self.vram.capacity_mb():
+                    logger.warning(
+                        "任务 %s 峰值估算 %dMB 超过可用预算 %dMB，按独占方式运行",
+                        job["id"],
+                        cost,
+                        self.vram.capacity_mb(),
+                    )
                 busy_worker[worker.base_url] = job["id"]
                 reserved += cost
                 user_running[uid] += 1
