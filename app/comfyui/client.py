@@ -18,6 +18,7 @@ _MODEL_FIELDS: dict[str, tuple[str, str]] = {
     "controlnet": ("ControlNetLoader", "control_net_name"),
     "vae": ("VAELoader", "vae_name"),
     "diffusion_models": ("UNETLoader", "unet_name"),
+    "gguf_models": ("UnetLoaderGGUF", "unet_name"),  # ComfyUI-GGUF 自定义节点（FLUX 等量化模型）
     "clip": ("CLIPLoader", "clip_name"),
     "text_encoders": ("CLIPLoader", "clip_name"),
     "clip_vision": ("CLIPVisionLoader", "clip_name"),
@@ -157,7 +158,14 @@ class ComfyUIClient:
         if not mapping:
             raise ComfyUIError(f"不支持的模型类别: {category}（可用: {', '.join(_MODEL_FIELDS)}）")
         node_type, field = mapping
-        return self._list_choice(node_type, field)
+        names = self._list_choice(node_type, field)
+        if category == "diffusion_models":
+            # GGUF 量化模型（FLUX 等）由 ComfyUI-GGUF 节点提供，合并进同一份列表；
+            # 没装该节点时 _list_choice 返回空列表，不影响原有行为。
+            for name in self._list_choice("UnetLoaderGGUF", "unet_name"):
+                if name not in names:
+                    names.append(name)
+        return names
 
     def list_samplers(self) -> list[str]:
         """列出 KSampler 支持的采样器。"""

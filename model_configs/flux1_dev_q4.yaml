@@ -1,0 +1,64 @@
+name: FLUX.1-dev (GGUF Q4)
+model_file: flux1-dev-Q4_K_S.gguf
+category: diffusion_models
+workflow: flux_txt2img
+source: "https://huggingface.co/city96/FLUX.1-dev-gguf（GGUF 量化，原模型 black-forest-labs/FLUX.1-dev）"
+params:
+  steps: 20
+  cfg: 1.0          # FLUX 官方工作流用 CFG=1，引导强度由 guidance 控制
+  guidance: 3.5     # FluxGuidance（官方推荐 3.5，范围 1-5）
+  sampler: euler
+  scheduler: simple
+  width: 1024
+  height: 1024
+  clip_name: clip_l.safetensors              # DualCLIPLoader clip_name1
+  clip_name2: t5xxl_fp8_e4m3fn.safetensors   # DualCLIPLoader clip_name2
+  clip_type: flux                            # DualCLIPLoader type
+  vae_name: ae.safetensors
+  latent_node: EmptySD3LatentImage
+prompt:
+  style: natural_language
+  guide: FLUX 对自然语言理解最好：用完整英文长句描述画面（主体/动作/环境/光线/镜头），不要堆 Danbooru 标签；CFG 固定 1，引导强度由 FluxGuidance 控制（默认 3.5）；负面提示词基本无效，尽量把要求写成正面描述。
+negative_default: ""
+
+# 官方推荐分辨率（FLUX.1-dev 训练分辨率 1MP 左右，非标准比例会出现重复构图）
+resolution_presets:
+  - name: 方图 · 通用
+    width: 1024
+    height: 1024
+    note: 官方推荐方图（1MP）
+  - name: 竖版 · 角色
+    width: 832
+    height: 1216
+    note: 竖版人物构图（接近 2:3）
+  - name: 横版 · 场景
+    width: 1216
+    height: 832
+    note: 横版场景 / 环境
+  - name: 宽屏 · 电影感
+    width: 1344
+    height: 768
+    note: 16:9 宽幅，适合场景与分镜
+  - name: 高画质 · 竖版
+    width: 1024
+    height: 1536
+    note: 约 1.57MP，显存占用更高
+
+# 画质增强预设（二次创作面板使用；8G 显存建议逐张来）
+quality:
+  hires:
+    upscale_model: 2x_IllustrationJaNai_V3detail_SPAN_S_40k_fp16.safetensors
+    denoise: 0.4
+    steps: 12
+    cfg: 1.0
+  face_detailer:
+    detector: bbox/face_yolov8m.pt
+    threshold: 0.5
+    denoise: 0.3
+    steps: 12
+    cfg: 1.0
+    guide_size: 512
+    max_size: 1024
+
+# FLUX 需要 FLUX 版 LoRA（与 SDXL/SD1.5 的 LoRA 不通用），当前机器暂无，故留空
+loras: []

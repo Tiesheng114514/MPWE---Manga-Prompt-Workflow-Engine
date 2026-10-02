@@ -4,6 +4,7 @@
   registry.py    注册表（register / list / build）
   txt2img.py     文生图（Checkpoint 模型）
   diffusion.py   扩散模型文生图（Z-Image / Anima）
+  flux.py        FLUX.1 文生图（GGUF 量化 UNET + DualCLIP + FluxGuidance）
   quality.py     画质增强（超分放大重绘 + 脸部修复）
   loras.py       LoRA 叠加链
   quality_pass.py 二次创作（对已生成图片做画质增强）
@@ -15,6 +16,6 @@
 from .registry import build_workflow, list_workflows, register
 
 # 导入各功能模块以触发注册
-from . import diffusion, quality_pass, txt2img  # noqa: E402,F401
+from . import diffusion, flux, quality_pass, txt2img  # noqa: E402,F401
 
 __all__ = ["build_workflow", "list_workflows", "register"]

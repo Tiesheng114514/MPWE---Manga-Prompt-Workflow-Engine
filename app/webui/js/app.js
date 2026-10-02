@@ -190,6 +190,8 @@ function applyModelPreset() {
     $("unet").value = pick(state.diffusionModels, "z_image_turbo", "");
   } else if (type === "anima") {
     $("unet").value = pick(state.diffusionModels, "anima", "");
+  } else if (type === "flux") {
+    $("unet").value = pick(state.diffusionModels, "flux", "");
   }
   applyDiffusionPreset();
   updateAgentAvailability();
@@ -301,7 +303,10 @@ function collectParams(forQualityPass) {
   const type = $("model_type").value;
   const workflow = forQualityPass
     ? "quality_pass"
-    : type === "z_image" ? "z_image_txt2img" : type === "anima" ? "anima_txt2img" : "txt2img";
+    : type === "z_image" ? "z_image_txt2img"
+      : type === "anima" ? "anima_txt2img"
+        : type === "flux" ? "flux_txt2img"
+          : "txt2img";
   const params = {
     workflow,
     checkpoint: type === "checkpoint" ? $("checkpoint").value : "",

@@ -163,6 +163,30 @@ WebUI 的「LoRA 叠加」面板列出 `models/loras` 全部文件，勾选后�
 2. 在本目录新建 `模型名.yaml`，按上面规范填写（参数以官方文档为准）；
 3. 重启 WebUI 后端即可自动识别。
 
+### 新增 GGUF 量化模型（如 FLUX.1-dev Q4）
+
+GGUF 量化模型（显存不够跑原版的场景）走的是 **ComfyUI-GGUF** 自定义节点，
+需要多做两步（其余流程一样）：
+
+1. **装节点**：把 [ComfyUI-GGUF](https://github.com/city96/ComfyUI-GGUF) 克隆到
+   `ComfyUI\custom_nodes\`，并用 ComfyUI 的 Python 装依赖
+   `pip install "gguf>=0.13.0" sentencepiece protobuf`；
+2. **下文件**（以 FLUX.1-dev Q4 为例，国内建议用 ModelScope 镜像，速度比 hf-mirror 快很多）：
+
+   | 文件 | 放置目录 | 来源 |
+   |---|---|---|
+   | `flux1-dev-Q4_K_S.gguf`（约 6.3G） | `models\diffusion_models\` | ModelScope `city96/FLUX.1-dev-gguf` |
+   | `clip_l.safetensors`（约 240M） | `models\text_encoders\` | ModelScope `comfyanonymous/flux_text_encoders` |
+   | `t5xxl_fp8_e4m3fn.safetensors`（约 4.6G） | `models\text_encoders\` | 同上 |
+   | `ae.safetensors`（约 320M，FLUX VAE） | `models\vae\` | 已有可复用 |
+
+   下载地址模板：`https://modelscope.cn/models/<仓库>/resolve/master/<文件名>`
+   （大文件建议分块下载：`curl -r <起始>-<结束>`，整段下载容易被 CDN 限速到几乎为 0）。
+
+3. **YAML 写法**（参考 `flux1_dev_q4.yaml`）：`workflow: flux_txt2img`，
+   `clip_name` 填 clip_l、`clip_name2` 填 t5xxl、`clip_type: flux`、
+   `guidance: 3.5`、`cfg: 1.0`（FLUX 的引导强度走 FluxGuidance，不是 CFG）。
+
 ## 当前模型
 
 | 模型 | 类别 | 工作流 | 官方参数来源 |
@@ -177,3 +201,4 @@ WebUI 的「LoRA 叠加」面板列出 `models/loras` 全部文件，勾选后�
 | ChenkinNoob XL V0.5 | checkpoints | txt2img | Civitai 2167995 |
 | Illustrious XL v2.0 | checkpoints | txt2img | OnomaAIResearch/Illustrious-XL-v2.0 |
 | NovelAI Diffusion Anime V2 | checkpoints | txt2img | NovelAI/nai-anime-v2 |
+| FLUX.1-dev (GGUF Q4) | diffusion_models | flux_txt2img | city96/FLUX.1-dev-gguf（BFL 原模型） |

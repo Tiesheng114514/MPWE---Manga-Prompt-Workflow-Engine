@@ -27,9 +27,15 @@ class GenerateRequest(BaseModel):
     # 扩散模型（UNET + CLIP + VAE）专用参数
     unet_name: str | None = Field(None, description="扩散模型文件名（diffusion_models）")
     clip_name: str | None = Field(None, description="文本编码器文件名（text_encoders）")
+    clip_name2: str | None = Field(
+        None, description="第二个文本编码器（FLUX 用 t5xxl；对应 DualCLIPLoader 的 clip_name2）"
+    )
     clip_type: str | None = Field(None, description="CLIPLoader 类型，留空则按官方预设自动选择")
     vae_name: str | None = Field(None, description="VAE 文件名")
     model_shift: float | None = Field(None, description="AuraFlow shift，留空则按官方预设自动选择")
+    guidance: float | None = Field(
+        None, description="引导强度（FLUX 走 FluxGuidance 节点，留空则按官方预设，默认 3.5）"
+    )
     clip_skip: int = Field(0, description="CLIP skip（如 NovelAI V2 必须为 2；0 表示不设置）")
     prompt: str = ""
     negative_prompt: str = ""
