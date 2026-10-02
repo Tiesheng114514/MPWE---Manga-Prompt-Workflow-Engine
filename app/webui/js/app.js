@@ -299,14 +299,26 @@ function syncResolutionPresetActive() {
 }
 
 /* ---------------- 生成 ---------------- */
+/**
+ * 决定用哪个工作流：优先取"当前模型预设"里声明的工作流（配置驱动），
+ * 预设里没有写时才回退到按模型类型映射。
+ * 这样新增模型（如 FLUX GGUF）只要 model_configs/*.yaml 写对 workflow 就行，
+ * 前端不需要跟着改，也不会因为浏览器缓存旧脚本而回退到错误的工作流。
+ */
+function currentWorkflow(forQualityPass) {
+  if (forQualityPass) return "quality_pass";
+  const preset = currentPreset();
+  if (preset && preset.workflow) return preset.workflow;
+  const type = $("model_type").value;
+  if (type === "z_image") return "z_image_txt2img";
+  if (type === "anima") return "anima_txt2img";
+  if (type === "flux") return "flux_txt2img";
+  return "txt2img";
+}
+
 function collectParams(forQualityPass) {
   const type = $("model_type").value;
-  const workflow = forQualityPass
-    ? "quality_pass"
-    : type === "z_image" ? "z_image_txt2img"
-      : type === "anima" ? "anima_txt2img"
-        : type === "flux" ? "flux_txt2img"
-          : "txt2img";
+  const workflow = currentWorkflow(forQualityPass);
   const params = {
     workflow,
     checkpoint: type === "checkpoint" ? $("checkpoint").value : "",
