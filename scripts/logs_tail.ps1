@@ -1,9 +1,9 @@
-# MPWE combined log viewer: tails WebUI + ComfyUI logs live.
+﻿# MPWE combined log viewer: tails WebUI + ComfyUI logs live.
 # Press q to stop (the launcher then quits all services).
 $ErrorActionPreference = 'SilentlyContinue'
 
-$logs = @('data\logs\webui.log', 'data\logs\comfyui_8188.log')
-$labels = @('[WebUI]  ', '[ComfyUI]')
+$logs = @('data\logs\webui.log', 'data\logs\webui.err', 'data\logs\comfyui_8188.log', 'data\logs\comfyui_8188.log.err')
+$labels = @('[WebUI]  ', '[WebUI!] ', '[ComfyUI]', '[ComfyUI!]')
 $positions = @{}
 foreach ($f in $logs) { $positions[$f] = 0 }
 

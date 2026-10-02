@@ -44,14 +44,22 @@ if %WORKERS% LSS 1 set "WORKERS=1"
 if %WORKERS% GTR 4 set "WORKERS=4"
 
 if not exist "%~dp0..\data\logs" mkdir "%~dp0..\data\logs"
-echo 启动 %WORKERS% 个 ComfyUI 实例（127.0.0.1:8188 起，日志: data\logs\comfyui_*.log）...
+echo 启动 %WORKERS% 个 ComfyUI 实例（127.0.0.1:8188 起）...
+echo 每个实例的窗口会实时显示加载过程与报错，同时写入 data\logs\comfyui_*.log
 cd /d "%COMFY_ROOT%"
 set PYTHONUNBUFFERED=1
 set "PYTHONPATH=%SITE_PACKAGES%"
 
+set "MPWE_COMFY_PS=%~dp0run_comfyui.ps1"
 for /l %%i in (1,1,%WORKERS%) do (
     set /a "P=8187+%%i"
-    start "ComfyUI-%%i" cmd /k ""%BASE_PY%" main.py --listen 127.0.0.1 --port !P! --extra-model-paths-config "%~dp0..\comfyui_extra_model_paths.yaml" --database-url "sqlite:///%~dp0..\data\comfyui_!P!.db" >> "%~dp0..\data\logs\comfyui_!P!.log" 2>&1"
+    set "MPWE_COMFY_PY=%BASE_PY%"
+    set "MPWE_COMFY_ROOT=%COMFY_ROOT%"
+    set "MPWE_COMFY_PORT=!P!"
+    set "MPWE_COMFY_EXTRA=%~dp0..\comfyui_extra_model_paths.yaml"
+    set "MPWE_COMFY_DB=sqlite:///%~dp0..\data\comfyui_!P!.db"
+    set "MPWE_COMFY_LOG=%~dp0..\data\logs\comfyui_!P!.log"
+    start "ComfyUI-%%i" cmd /k powershell -NoProfile -ExecutionPolicy Bypass -File "%MPWE_COMFY_PS%"
 )
 
 echo.
