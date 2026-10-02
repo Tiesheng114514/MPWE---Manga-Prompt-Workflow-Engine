@@ -982,6 +982,26 @@ async function logout() {
 }
 
 /* ---------------- 提示与工具 ---------------- */
+/**
+ * 检测浏览器是不是在用缓存的旧脚本。
+ * 服务端 index.html 里引用的 app.js 版本如果和当前运行的不一致，
+ * 说明页面用的是旧缓存（会出现"选项有、但功能不对"的怪问题），提示用户强制刷新。
+ */
+function checkFrontendVersion(serverVersion) {
+  if (!serverVersion) return;
+  try {
+    const script = Array.from(document.scripts).find((s) => s.src.includes("app.js"));
+    const myVersion = script ? new URL(script.src).searchParams.get("v") || "" : "";
+    if (!myVersion || myVersion === serverVersion) return;
+    const bar = document.createElement("div");
+    bar.style.cssText =
+      "position:fixed;left:0;right:0;top:0;z-index:200;background:#fbbf24;color:#1a1206;" +
+      "padding:8px 14px;font-size:13px;text-align:center;font-weight:600;";
+    bar.textContent = "页面脚本已更新，请按 Ctrl+F5 强制刷新后再操作（否则可能出现功能异常）";
+    document.body.appendChild(bar);
+  } catch (_) { /* ignore */ }
+}
+
 function showError(message) {
   const box = $("error-box");
   box.textContent = message;
@@ -1095,6 +1115,7 @@ $("free-modal-close").addEventListener("click", closeFreeModal);
     const cfg = await fetchJSON("/mpwe/config");
     state.turnstileSiteKey = (cfg.turnstile && cfg.turnstile.site_key) || "";
     state.billing = cfg.billing || { signup_bonus: {}, free_recharge: {} };
+    checkFrontendVersion(cfg.webui_version);
     const sb = state.billing.signup_bonus || {};
     if (sb.api != null && sb.image != null) {
       $("reg-hint").textContent =

@@ -51,9 +51,46 @@ class ComfyUIClient:
         try:
             resp = requests.post(f"{self.base_url}{path}", json=json_body, timeout=timeout or self.timeout)
             resp.raise_for_status()
+        except requests.HTTPError as exc:
+            raise ComfyUIError(
+                f"ComfyUI POST {path} 失败: {exc}{self._error_detail(exc.response)}"
+            ) from exc
         except requests.RequestException as exc:
             raise ComfyUIError(f"ComfyUI POST {path} 失败: {exc}") from exc
         return resp
+
+    @staticmethod
+    def _error_detail(resp: requests.Response | None) -> str:
+        """把 ComfyUI 的错误响应翻译成一句人话（节点校验失败的原因）。
+
+        ComfyUI 的 /prompt 返回 400 时，body 里会写明是哪个节点、哪个参数不合法
+        （例如 ckpt_name 为空、模型不在列表里）。以前这些信息被丢弃，只剩
+        "400 Client Error"，排查时完全看不出原因，所以这里统一提取出来。
+        """
+        if resp is None:
+            return ""
+        data: Any = None
+        try:
+            data = resp.json()
+        except Exception:
+            text = (resp.text or "").strip()
+            return f" | {text[:300]}" if text else ""
+        parts: list[str] = []
+        node_errors = data.get("node_errors") or {}
+        for node_id, info in list(node_errors.items())[:3]:
+            info = info or {}
+            class_type = info.get("class_type", "")
+            for err in (info.get("errors") or [])[:2]:
+                detail = (err or {}).get("details") or (err or {}).get("message") or ""
+                if detail:
+                    parts.append(f"节点 {node_id}（{class_type}）: {detail}")
+        if not parts:
+            err = data.get("error")
+            if isinstance(err, dict):
+                parts.append(str(err.get("details") or err.get("message") or err.get("type") or ""))
+            elif err:
+                parts.append(str(err))
+        return " | " + "; ".join(p for p in parts if p.strip()) if parts else ""
 
     # ---------------- 连接与状态 ----------------
     def check_connection(self) -> bool:

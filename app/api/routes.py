@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import re
 import time
 from pathlib import Path
 from typing import Any
@@ -23,6 +24,27 @@ from app.core.schemas import GenerateRequest, PromptTranslateRequest
 from app.core.vram import VramBudget
 from app.prompting import loader as prompt_loader
 from app.prompting.jobs import PromptJobManager, submit_prompt_job
+
+_INDEX_HTML = Path(__file__).resolve().parent.parent / "webui" / "index.html"
+_asset_version_cache: dict = {"mtime": 0.0, "version": ""}
+
+
+def webui_asset_version() -> str:
+    """读取前端 index.html 里引用的 app.js 版本号（用于检测浏览器缓存了旧脚本）。"""
+    try:
+        stat = _INDEX_HTML.stat()
+    except OSError:
+        return ""
+    if _asset_version_cache["mtime"] != stat.st_mtime:
+        try:
+            text = _INDEX_HTML.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            return ""
+        match = re.search(r"js/app\.js\?v=([\w.\-]+)", text)
+        _asset_version_cache.update(
+            {"mtime": stat.st_mtime, "version": match.group(1) if match else ""}
+        )
+    return str(_asset_version_cache["version"])
 
 
 def create_router(config: dict, scheduler: JobScheduler | None = None) -> APIRouter:
@@ -70,6 +92,7 @@ def create_router(config: dict, scheduler: JobScheduler | None = None) -> APIRou
                 "signup_bonus": (config.get("billing") or {}).get("signup_bonus") or {},
                 "free_recharge": (config.get("billing") or {}).get("free_recharge") or {},
             },
+            "webui_version": webui_asset_version(),
         }
 
     # ---------------- ComfyUI 状态与枚举 ----------------
@@ -130,6 +153,26 @@ def create_router(config: dict, scheduler: JobScheduler | None = None) -> APIRou
         user = current_user(request)
         params: dict[str, Any] = req.model_dump()
         try:
+            # 模型存在性预检：模型没放进 ComfyUI 的模型目录（或没重启 ComfyUI）时，
+            # 直接回一句能看懂的话，而不是让 ComfyUI 抛 400 让人一头雾水。
+            model_name = (params.get("checkpoint") or params.get("unet_name") or "").strip()
+            if model_name and req.workflow != "quality_pass":
+                is_ckpt = bool(params.get("checkpoint"))
+                category = "checkpoints" if is_ckpt else "diffusion_models"
+                folder = "checkpoints" if is_ckpt else "diffusion_models"
+                try:
+                    available = client.list_models(category)
+                except ComfyUIError:
+                    available = []
+                if available and model_name not in available:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=(
+                            f"模型「{model_name}」不在 ComfyUI 的模型列表里。"
+                            f"请确认文件已放到 ComfyUI 的 models\\{folder}\\（或共享模型目录的对应子目录），"
+                            "然后重启 ComfyUI 并刷新页面重试。"
+                        ),
+                    )
             # 余额预检：图片钱包至少够本次预期张数（0.3 元/张）
             price = float((config.get("billing") or {}).get("image", {}).get("price_per_image", 0.3))
             expected = max(1, int(params.get("batch_size") or 1))
